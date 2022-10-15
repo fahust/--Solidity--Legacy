@@ -18,21 +18,27 @@ contract LEGACY is Ownable {
     uint256 lastClaim;
     uint256 weiBySeconds;
     uint256 founds;
-    uint256 openFounds;
   }
 
   uint256 countLegs;
 
   function createLeg(Leg memory leg) external payable {
     require(msg.value == leg.founds);
-    require(msg.value >= leg.openFounds);
+    leg.lastClaim = leg.startAt;
     legs[countLegs] = leg;
     countLegs++;
   }
 
-  function addOpenFounds(uint256 legId, uint256 openFound) external {
+  function unlockFounds(uint256 legId, uint256 unlockFound) external {
     require(_msgSender() == legs[legId].founder, "you are not founder");
-    legs[legId].openFounds += openFound;
+    legs[legId].lastClaim -= unlockFound / legs[legId].weiBySeconds;
+  }
+
+  function changeWeiBySeconds(uint256 legId, uint256 weiBySeconds) external {
+    require(_msgSender() == legs[legId].founder, "you are not founder");
+    uint256 currentClaimable = claimAuthorization(legId);
+    legs[legId].weiBySeconds = weiBySeconds;
+    legs[legId].lastClaim = block.timestamp - (currentClaimable / weiBySeconds);
   }
 
   function addFounds(uint256 legId) external payable {
@@ -41,19 +47,16 @@ contract LEGACY is Ownable {
   }
 
   function takeMyLeg(uint256 claim, uint256 legId) external returns (bool success) {
+    require(_msgSender() == legs[legId].heir, "you are not good heir");
+    require(block.timestamp > legs[legId].startAt, "legacy has not start");
+    require(block.timestamp < legs[legId].endAt, "legacy has ended");
+
     uint256 maxClaimable = claimAuthorization(legId);
+
     require(claim <= maxClaimable, "you claim more than authorized");
     require(claim <= legs[legId].founds, "you claim more than found");
 
-    legs[legId].lastClaim =
-      block.timestamp -
-      (block.timestamp -
-        (legs[legId].lastClaim == 0 ? legs[legId].startAt : legs[legId].lastClaim));
-    if (claim > legs[legId].openFounds) {
-      legs[legId].openFounds = 0;
-    } else {
-      legs[legId].openFounds -= claim;
-    }
+    legs[legId].lastClaim += claim / legs[legId].weiBySeconds;
     legs[legId].founds -= claim;
 
     (success, ) = payable(_msgSender()).call{ value: claim }("");
@@ -61,21 +64,18 @@ contract LEGACY is Ownable {
   }
 
   function claimAuthorization(uint256 legId) public view returns (uint256) {
-    require(_msgSender() == legs[legId].heir, "you are not good heir");
-
-    require(block.timestamp > legs[legId].startAt, "legacy has not start");
-    require(block.timestamp < legs[legId].endAt, "legacy has ended");
-
-    uint256 maxClaimable = legs[legId].openFounds +
-      ((block.timestamp -
-        (legs[legId].lastClaim == 0 ? legs[legId].startAt : legs[legId].lastClaim)) *
-        legs[legId].weiBySeconds);
+    uint256 maxClaimable = ((block.timestamp - legs[legId].lastClaim) *
+      legs[legId].weiBySeconds);
 
     return maxClaimable;
   }
 
   function founds(uint256 legId) external view returns (uint256) {
     return legs[legId].founds;
+  }
+
+  function time() external view returns (uint256) {
+    return block.timestamp;
   }
 
   function searchMyChests() external view returns (Leg[] memory) {
