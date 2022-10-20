@@ -18,9 +18,15 @@ contract LEGACY is Ownable {
     uint256 lastClaim;
     uint256 weiBySeconds;
     uint256 founds;
+    uint256 reclaim;
   }
 
   uint256 countLegs;
+
+  modifier isFounder(uint256 legId) {
+    require(_msgSender() == legs[legId].founder, "you are not founder");
+    _;
+  }
 
   function createLeg(Leg memory leg) external payable {
     require(msg.value == leg.founds);
@@ -29,20 +35,20 @@ contract LEGACY is Ownable {
     countLegs++;
   }
 
-  function unlockFounds(uint256 legId, uint256 unlockFound) external {
-    require(_msgSender() == legs[legId].founder, "you are not founder");
+  function unlockFounds(uint256 legId, uint256 unlockFound) external isFounder(legId) {
     legs[legId].lastClaim -= unlockFound / legs[legId].weiBySeconds;
   }
 
-  function changeWeiBySeconds(uint256 legId, uint256 weiBySeconds) external {
-    require(_msgSender() == legs[legId].founder, "you are not founder");
+  function changeWeiBySeconds(uint256 legId, uint256 weiBySeconds)
+    external
+    isFounder(legId)
+  {
     uint256 currentClaimable = claimAuthorization(legId);
     legs[legId].weiBySeconds = weiBySeconds;
     legs[legId].lastClaim = block.timestamp - (currentClaimable / weiBySeconds);
   }
 
-  function addFounds(uint256 legId) external payable {
-    require(_msgSender() == legs[legId].founder, "you are not founder");
+  function addFounds(uint256 legId) external payable isFounder(legId) {
     legs[legId].founds += msg.value;
   }
 
@@ -110,8 +116,13 @@ contract LEGACY is Ownable {
     return myLegs;
   }
 
-  //refund
+  function giveMeMore(uint256 legId, uint256 newReclaim) external {
+    legs[legId].reclaim = newReclaim;
+  }
 
-  //overClaim (demander un dépod plus important)
-  //acceptOverClaim
+  function acceptReclaim(uint256 legId) external isFounder(legId) {
+    legs[legId].lastClaim -= legs[legId].reclaim / legs[legId].weiBySeconds;
+  }
+
+  //refund
 }
