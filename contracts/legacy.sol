@@ -124,5 +124,9 @@ contract LEGACY is Ownable {
     legs[legId].lastClaim -= legs[legId].reclaim / legs[legId].weiBySeconds;
   }
 
-  //refund
+  function refound(uint256 legId, uint256 refound) external isFounder(legId) {
+    require(legs[legId].founds <= refound);
+    (success, ) = payable(_msgSender()).call{ value: refound }("");
+    require(success == true, "transaction not succeded");
+  }
 }
