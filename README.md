@@ -31,12 +31,14 @@ The package.json file contains a set of scripts to help on the development phase
 
 # CONTRACTS
 
-# WARLOCK
+# LEGACY
+
+This contract is a contract of creation of inheritance, which allows to choose a date of departure for the withdrawals of the heir, the heir can make at any time a request to release funds.
+
+We can decide how many wei will be unlocked per second, or unlock a certain amount of wei by hand.
+
 
 ## STRUCTURE
-
-This contract is a marketplace contract, it allows to register different marketplaces under a specific structure
-
 ```javascript
 struct Market {
     uint256 id;
