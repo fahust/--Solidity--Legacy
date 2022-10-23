@@ -129,3 +129,60 @@ function refound(uint256 legId, uint256 refound) external isFounder(legId) {
 ```
 
 ## GUETTER
+
+```javascript
+function claimAuthorization(uint256 legId) public view returns (uint256) {
+    uint256 maxClaimable = ((block.timestamp - legs[legId].lastClaim) *
+      legs[legId].weiBySeconds);
+
+    return maxClaimable;
+  }
+```
+
+```javascript
+function founds(uint256 legId) external view returns (uint256) {
+    return legs[legId].founds;
+  }
+```
+
+```javascript
+function time() external view returns (uint256) {
+    return block.timestamp;
+  }
+```
+
+```javascript
+function searchMyChests() external view returns (Leg[] memory) {
+    uint256 totalMyChests;
+    uint256 countMyChests;
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].founder == _msgSender()) totalMyChests++;
+    }
+    Leg[] memory myLegs = new Leg[](totalMyChests);
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].founder == _msgSender()) {
+        countMyChests++;
+        myLegs[countMyChests] = legs[i];
+      }
+    }
+    return myLegs;
+  }
+```
+
+```javascript
+function searchMyLegs() external view returns (Leg[] memory) {
+    uint256 totalMyLegs;
+    uint256 countMyLegs;
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].heir == _msgSender()) totalMyLegs++;
+    }
+    Leg[] memory myLegs = new Leg[](totalMyLegs);
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].heir == _msgSender()) {
+        countMyLegs++;
+        myLegs[countMyLegs] = legs[i];
+      }
+    }
+    return myLegs;
+  }
+```
