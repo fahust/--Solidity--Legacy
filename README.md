@@ -31,150 +31,158 @@ The package.json file contains a set of scripts to help on the development phase
 
 # CONTRACTS
 
-# WARLOCK
+# LEGACY
+
+This contract is a contract of creation of inheritance, which allows to choose a date of departure for the withdrawals of the heir, the heir can make at any time a request to release funds.
+
+We can decide how many wei will be unlocked per second, or unlock a certain amount of wei by hand.
 
 ## STRUCTURE
 
-This contract is a marketplace contract, it allows to register different marketplaces under a specific structure
-
 ```javascript
-struct Market {
-    uint256 id;
-    uint256 value;
-    Consumer[] consumers;
-    string uri;
-    string externalUrl;
+struct Leg {
     bytes32 name;
-    bytes32 purchasesQuantity;
-}
-```
-
-Once the marketplaces, anyone can buy the product from that marketplace.
-
-Each purchase is recorded on the blockchain in a structure linked to a market:
-
-```javascript
-struct Purchase {
-    uint256 market;
-    uint256 value;
-    address consumer;
-    bytes32 quantity;
-    bytes32 status; //shipping //waiting
-}
-```
-
-And its status can be updated by the owner.
-
-```javascript
-
-```
-
-Each buyer is registered on the blockchain in a linked structure:
-
-```javascript
-struct Consumer {
-    uint256 totalPurchase;
-    address addr;
-    Purchase[] purchases;
-}
+    address founder;
+    address heir;
+    uint256 startAt;
+    uint256 endAt;
+    uint256 lastClaim;
+    uint256 weiBySeconds;
+    uint256 founds;
+    uint256 reclaim;
+  }
 ```
 
 ## SETTER
 
-You can add, update or delete markets.
+You can add, update or delete legs.
 
 ```javascript
-function setMarkets(Market[] calldata newMarkets) external onlyOwner {
-    delete markets;
-    for (uint256 i = 0; i < newMarkets.length; i++) {
-      markets.push(newMarkets[i]);
-    }
-}
+function createLeg(Leg memory leg) external payable {
+    require(msg.value == leg.founds);
+    leg.lastClaim = leg.startAt;
+    legs[countLegs] = leg;
+    countLegs++;
+  }
 ```
 
 ```javascript
-function addMarket(Market calldata newMarket) external onlyOwner {
-    markets.push(newMarket);
-}
+function unlockFounds(uint256 legId, uint256 unlockFound) external isFounder(legId) {
+    legs[legId].lastClaim -= unlockFound / legs[legId].weiBySeconds;
+  }
 ```
 
 ```javascript
-function updateMarket(Market calldata newMarket, uint256 key) external onlyOwner {
-    markets[key] = newMarket;
-}
+function changeWeiBySeconds(uint256 legId, uint256 weiBySeconds)
+    external
+    isFounder(legId)
+  {
+    uint256 currentClaimable = claimAuthorization(legId);
+    legs[legId].weiBySeconds = weiBySeconds;
+    legs[legId].lastClaim = block.timestamp - (currentClaimable / weiBySeconds);
+  }
 ```
 
 ```javascript
-function removeMarket(uint256 id) external onlyOwner {
-    delete markets[id];
-}
+function addFounds(uint256 legId) external payable isFounder(legId) {
+    legs[legId].founds += msg.value;
+  }
 ```
 
-Products can be purchased by anyone in exchange for crypto
+```javascript
+function takeMyLeg(uint256 claim, uint256 legId) external returns (bool success) {
+    require(_msgSender() == legs[legId].heir, "you are not good heir");
+    require(block.timestamp > legs[legId].startAt, "legacy has not start");
+    require(block.timestamp < legs[legId].endAt, "legacy has ended");
+
+    uint256 maxClaimable = claimAuthorization(legId);
+
+    require(claim <= maxClaimable, "you claim more than authorized");
+    require(claim <= legs[legId].founds, "you claim more than found");
+
+    legs[legId].lastClaim += claim / legs[legId].weiBySeconds;
+    legs[legId].founds -= claim;
+
+    (success, ) = payable(_msgSender()).call{ value: claim }("");
+    require(success == true, "transaction not succeded");
+  }
+```
 
 ```javascript
-function buyInMarket(uint256 marketId, bytes32 quantity) external payable {
-    require(msg.value >= markets[marketId].value * asciiToInteger(quantity));
-    require(
-      asciiToInteger(markets[marketId].currentLimit) + asciiToInteger(quantity) <
-        asciiToInteger(markets[marketId].maxLimit)
-    );
-    Purchase memory purchase = Purchase({
-      market: marketId,
-      quantity: quantity,
-      value: msg.value,
-      consumer: msg.sender,
-      status: STATUS_IN_ORDER
-    });
-    purchases[msg.sender][consumers[msg.sender].totalPurchase] = purchase;
-    consumers[msg.sender].purchases.push(purchase);
-    consumers[msg.sender].totalPurchase++;
-    if (consumers[msg.sender].addr != msg.sender) consumers[msg.sender].addr = msg.sender;
-    if (existsInConsumers(msg.sender, markets[marketId].consumers) == false)
-      markets[marketId].consumers.push(consumers[msg.sender]);
-}
+function giveMeMore(uint256 legId, uint256 newReclaim) external {
+    legs[legId].reclaim = newReclaim;
+  }
+```
+
+```javascript
+function acceptReclaim(uint256 legId) external isFounder(legId) {
+    legs[legId].lastClaim -= legs[legId].reclaim / legs[legId].weiBySeconds;
+  }
+```
+
+```javascript
+function refound(uint256 legId, uint256 refound) external isFounder(legId) {
+    require(legs[legId].founds <= refound);
+    (success, ) = payable(_msgSender()).call{ value: refound }("");
+    require(success == true, "transaction not succeded");
+  }
 ```
 
 ## GUETTER
 
 ```javascript
-function getMarkets() external view returns (Market[] memory) {
-    return markets;
-}
-```
+function claimAuthorization(uint256 legId) public view returns (uint256) {
+    uint256 maxClaimable = ((block.timestamp - legs[legId].lastClaim) *
+      legs[legId].weiBySeconds);
 
-```javascript
-function getMarket(uint256 marketId) external view returns (Market memory) {
-    return markets[marketId];
+    return maxClaimable;
   }
 ```
 
 ```javascript
-function getConsumer(address consumerAddress) external view returns (Consumer memory) {
-    return consumers[consumerAddress];
+function founds(uint256 legId) external view returns (uint256) {
+    return legs[legId].founds;
   }
 ```
 
 ```javascript
-function getMarketConsumers(uint256 marketId)
-    external
-    view
-    returns (Consumer[] memory)
-  {
-    return markets[marketId].consumers;
+function time() external view returns (uint256) {
+    return block.timestamp;
   }
 ```
 
 ```javascript
-function getPurchasesConsumer(address consumerAddress)
-    external
-    view
-    returns (Purchase[] memory)
-  {
-    Purchase[] memory consumerPurcharses;
-    for (uint256 i = 0; i < consumers[consumerAddress].totalPurchase; i++) {
-      consumerPurcharses[i] = purchases[consumerAddress][i];
+function searchMyChests() external view returns (Leg[] memory) {
+    uint256 totalMyChests;
+    uint256 countMyChests;
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].founder == _msgSender()) totalMyChests++;
     }
-    return consumerPurcharses;
+    Leg[] memory myLegs = new Leg[](totalMyChests);
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].founder == _msgSender()) {
+        countMyChests++;
+        myLegs[countMyChests] = legs[i];
+      }
+    }
+    return myLegs;
+  }
+```
+
+```javascript
+function searchMyLegs() external view returns (Leg[] memory) {
+    uint256 totalMyLegs;
+    uint256 countMyLegs;
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].heir == _msgSender()) totalMyLegs++;
+    }
+    Leg[] memory myLegs = new Leg[](totalMyLegs);
+    for (uint256 i = 0; i < countLegs; i++) {
+      if (legs[i].heir == _msgSender()) {
+        countMyLegs++;
+        myLegs[countMyLegs] = legs[i];
+      }
+    }
+    return myLegs;
   }
 ```
