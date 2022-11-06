@@ -39,10 +39,10 @@ contract LEGACY is Ownable {
     legs[legId].lastClaim -= unlockFound / legs[legId].weiBySeconds;
   }
 
-  function changeWeiBySeconds(uint256 legId, uint256 weiBySeconds)
-    external
-    isFounder(legId)
-  {
+  function changeWeiBySeconds(
+    uint256 legId,
+    uint256 weiBySeconds
+  ) external isFounder(legId) {
     uint256 currentClaimable = claimAuthorization(legId);
     legs[legId].weiBySeconds = weiBySeconds;
     legs[legId].lastClaim = block.timestamp - (currentClaimable / weiBySeconds);
@@ -124,9 +124,9 @@ contract LEGACY is Ownable {
     legs[legId].lastClaim -= legs[legId].reclaim / legs[legId].weiBySeconds;
   }
 
-  function refound(uint256 legId, uint256 refound) external isFounder(legId) {
-    require(legs[legId].founds <= refound);
-    (success, ) = payable(_msgSender()).call{ value: refound }("");
+  function refound(uint256 legId, uint256 value) external isFounder(legId) {
+    require(legs[legId].founds <= value);
+    (bool success, ) = payable(_msgSender()).call{ value: value }("");
     require(success == true, "transaction not succeded");
   }
 }
