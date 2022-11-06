@@ -42,11 +42,7 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
    */
-  constructor(
-    string memory name_,
-    string memory symbol_,
-    uint256 maxSupply_
-  ) {
+  constructor(string memory name_, string memory symbol_, uint256 maxSupply_) {
     _name = name_;
     _symbol = symbol_;
     _maxSupply = maxSupply_;
@@ -56,13 +52,9 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC165-supportsInterface}.
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165, IERC165)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC165, IERC165) returns (bool) {
     return
       interfaceId == type(IERC721).interfaceId ||
       interfaceId == type(IERC721Metadata).interfaceId ||
@@ -111,13 +103,9 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC721Metadata-tokenURI}.
    */
-  function tokenURI(uint256 tokenId)
-    public
-    view
-    virtual
-    override
-    returns (string memory)
-  {
+  function tokenURI(
+    uint256 tokenId
+  ) public view virtual override returns (string memory) {
     require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
     string memory baseURI = _baseURI();
@@ -170,13 +158,10 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC721-isApprovedForAll}.
    */
-  function isApprovedForAll(address owner, address operator)
-    public
-    view
-    virtual
-    override
-    returns (bool)
-  {
+  function isApprovedForAll(
+    address owner,
+    address operator
+  ) public view virtual override returns (bool) {
     return _operatorApprovals[owner][operator];
   }
 
@@ -274,12 +259,10 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
    *
    * - `tokenId` must exist.
    */
-  function _isApprovedOrOwner(address spender, uint256 tokenId)
-    internal
-    view
-    virtual
-    returns (bool)
-  {
+  function _isApprovedOrOwner(
+    address spender,
+    uint256 tokenId
+  ) internal view virtual returns (bool) {
     require(_exists(tokenId), "ERC721: operator query for nonexistent token");
     address owner = ERC721r.ownerOf(tokenId);
     return (spender == owner ||
@@ -322,10 +305,10 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
     _balances[to] += _numToMint;
   }
 
-  function getRandomAvailableTokenId(address to, uint256 updatedNumAvailableTokens)
-    internal
-    returns (uint256)
-  {
+  function getRandomAvailableTokenId(
+    address to,
+    uint256 updatedNumAvailableTokens
+  ) internal returns (uint256) {
     uint256 randomNum = uint256(
       keccak256(
         abi.encode(
@@ -345,10 +328,10 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
   }
 
   // Implements https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle. Code taken from CryptoPhunksV2
-  function getAvailableTokenAtIndex(uint256 indexToUse, uint256 updatedNumAvailableTokens)
-    internal
-    returns (uint256)
-  {
+  function getAvailableTokenAtIndex(
+    uint256 indexToUse,
+    uint256 updatedNumAvailableTokens
+  ) internal returns (uint256) {
     uint256 valAtIndex = _availableTokens[indexToUse];
     uint256 result;
     if (valAtIndex == 0) {
@@ -404,11 +387,7 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
    *
    * Emits a {Transfer} event.
    */
-  function _transfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) internal virtual {
+  function _transfer(address from, address to, uint256 tokenId) internal virtual {
     require(ERC721r.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
     require(to != address(0), "ERC721: transfer to the zero address");
 

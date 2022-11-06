@@ -127,13 +127,9 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC165-supportsInterface}.
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165, IERC165)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC165, IERC165) returns (bool) {
     return
       interfaceId == type(IERC721).interfaceId ||
       interfaceId == type(IERC721Metadata).interfaceId ||
@@ -234,13 +230,9 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC721Metadata-tokenURI}.
    */
-  function tokenURI(uint256 tokenId)
-    public
-    view
-    virtual
-    override
-    returns (string memory)
-  {
+  function tokenURI(
+    uint256 tokenId
+  ) public view virtual override returns (string memory) {
     if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
     string memory baseURI = _baseURI();
@@ -295,13 +287,10 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
   /**
    * @dev See {IERC721-isApprovedForAll}.
    */
-  function isApprovedForAll(address owner, address operator)
-    public
-    view
-    virtual
-    override
-    returns (bool)
-  {
+  function isApprovedForAll(
+    address owner,
+    address operator
+  ) public view virtual override returns (bool) {
     return _operatorApprovals[owner][operator];
   }
 
@@ -371,11 +360,7 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
    *
    * Emits a {Transfer} event.
    */
-  function _safeMint(
-    address to,
-    uint256 quantity,
-    bytes memory _data
-  ) internal {
+  function _safeMint(address to, uint256 quantity, bytes memory _data) internal {
     _mint(to, quantity, _data, true);
   }
 
@@ -389,12 +374,7 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
    *
    * Emits a {Transfer} event.
    */
-  function _mint(
-    address to,
-    uint256 quantity,
-    bytes memory _data,
-    bool safe
-  ) internal {
+  function _mint(address to, uint256 quantity, bytes memory _data, bool safe) internal {
     uint256 startTokenId = _currentIndex;
     if (to == address(0)) revert MintToZeroAddress();
     if (quantity == 0) revert MintZeroQuantity();
@@ -490,11 +470,7 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
    *
    * Emits a {Transfer} event.
    */
-  function _transfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) private {
+  function _transfer(address from, address to, uint256 tokenId) private {
     TokenOwnership memory prevOwnership = _ownershipOf(tokenId);
 
     if (prevOwnership.addr != from) revert TransferFromIncorrectOwner();
@@ -617,11 +593,7 @@ contract UERC721A is Context, ERC165, IERC721, IERC721Metadata {
    *
    * Emits a {Approval} event.
    */
-  function _approve(
-    address to,
-    uint256 tokenId,
-    address owner
-  ) private {
+  function _approve(address to, uint256 tokenId, address owner) private {
     _tokenApprovals[tokenId] = to;
     emit Approval(owner, to, tokenId);
   }

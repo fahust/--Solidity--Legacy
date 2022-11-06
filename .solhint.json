@@ -22,7 +22,7 @@
     "no-unused-vars": "error",
     "no-empty-blocks": "warn",
     "code-complexity": ["warn", 8],
-    "quotes": ["error","double"],
+    "quotes": ["error", "double"],
     "var-name-mixedcase": "warn",
     "const-name-snakecase": "error",
     "contract-name-camelcase": "error",
